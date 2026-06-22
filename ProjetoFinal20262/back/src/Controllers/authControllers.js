@@ -1,45 +1,156 @@
-const express = require('express');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const path = require('path');
+const UsuarioModel = require('../Models/authModels');
 
-const login = async (req, res) => {
-    const { email, password } = req.body;
+const JWT_SECRET = process.env.JWT_SECRET || 'segredo-temporario-123';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    console.log('🔐 Tentativa de login:', email); // Para debug
+function gerarToken(usuario) {
+    return jwt.sign(
+        {
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email,
+        },
+        JWT_SECRET,
+        { expiresIn: '24h' }
+    );
+}
 
-    if (!email || !password) {
+function formatarUsuario(usuario) {
+    return {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+    };
+}
+
+const cadastro = async (req, res) => {
+    const { nome, email, password } = req.body;
+    const nomeLimpo = String(nome || '').trim();
+    const emailNormalizado = UsuarioModel.normalizarEmail(email);
+    const senha = String(password || '');
+
+    if (!nomeLimpo || !emailNormalizado || !senha) {
         return res.status(400).json({
             sucesso: false,
-            mensagem: 'E-mail e senha são obrigatórios.'
+            mensagem: 'Nome, e-mail e senha sao obrigatorios.'
         });
     }
 
-    // Credenciais temporárias (ajuste conforme seu .env)
-    if (email === process.env.AUTH_USER && password === process.env.AUTH_PASSWORD) {
-        const token = jwt.sign(
-            { email: email, nome: "Administrador" },
-            process.env.JWT_SECRET || 'segredo-temporario-123',
-            { expiresIn: '24h' }
-        );
+    if (!EMAIL_REGEX.test(emailNormalizado)) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: 'Informe um e-mail valido.'
+        });
+    }
 
-        console.log('✅ Login bem-sucedido');
+    if (senha.length < 6) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: 'A senha precisa ter pelo menos 6 caracteres.'
+        });
+    }
+
+    try {
+        const usuarioExistente = await UsuarioModel.buscarPorEmail(emailNormalizado);
+
+        if (usuarioExistente) {
+            return res.status(409).json({
+                sucesso: false,
+                mensagem: 'Este e-mail ja esta cadastrado.'
+            });
+        }
+
+        const senhaHash = await bcrypt.hash(senha, 10);
+        const usuario = await UsuarioModel.criarUsuario({
+            nome: nomeLimpo,
+            email: emailNormalizado,
+            senhaHash,
+        });
+        const token = gerarToken(usuario);
+
+        return res.status(201).json({
+            sucesso: true,
+            mensagem: 'Cadastro realizado com sucesso.',
+            token,
+            usuario: formatarUsuario(usuario),
+        });
+    } catch (error) {
+        if (error.code === '23505') {
+            return res.status(409).json({
+                sucesso: false,
+                mensagem: 'Este e-mail ja esta cadastrado.'
+            });
+        }
+
+        return res.status(500).json({
+            sucesso: false,
+            mensagem: 'Erro ao cadastrar usuario.'
+        });
+    }
+};
+
+const login = async (req, res) => {
+    const { email, password } = req.body;
+    const emailNormalizado = UsuarioModel.normalizarEmail(email);
+    const senha = String(password || '');
+
+    if (!emailNormalizado || !senha) {
+        return res.status(400).json({
+            sucesso: false,
+            mensagem: 'E-mail e senha sao obrigatorios.'
+        });
+    }
+
+    try {
+        const usuario = await UsuarioModel.buscarPorEmail(emailNormalizado);
+
+        if (!usuario) {
+            return res.status(401).json({
+                sucesso: false,
+                mensagem: 'Email ou senha incorretos.'
+            });
+        }
+
+        const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
+
+        if (!senhaValida) {
+            return res.status(401).json({
+                sucesso: false,
+                mensagem: 'Email ou senha incorretos.'
+            });
+        }
+
+        const token = gerarToken(usuario);
 
         return res.json({
             sucesso: true,
             mensagem: 'Login bem-sucedido.',
-            token: token
+            token,
+            usuario: formatarUsuario(usuario),
         });
-    } else {
-        return res.status(401).json({
+    } catch (error) {
+        return res.status(500).json({
             sucesso: false,
-            mensagem: 'Email ou senha incorretos.'
+            mensagem: 'Erro ao realizar login.'
         });
     }
 };
 
 const validarToken = (req, res) => {
-    res.json({ sucesso: true, mensagem: 'Token válido.' });
+    if (!req.user) {
+        return res.status(401).json({
+            sucesso: false,
+            mensagem: 'Usuario nao autenticado.'
+        });
+    }
+
+    res.json({
+        sucesso: true,
+        mensagem: 'Token valido.',
+        usuario: req.user,
+    });
 };
 
-module.exports = { login, validarToken };
+module.exports = { cadastro, login, validarToken };

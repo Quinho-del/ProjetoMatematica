@@ -55,22 +55,8 @@ function Login({ onLogin, onNavigate }) {
         <div className="login-wordmark">Vestibular+</div>
         <div className="login-showcase-copy">
           <span>Vestibular+</span>
-          <h1>Matematica com ritmo de prova.</h1>
+          <h1>Estatistica com ritmo de prova.</h1>
           <p>Entre, escolha uma questao e avance sem perder tempo.</p>
-        </div>
-        <div className="login-metrics">
-          <div>
-            <strong>13</strong>
-            <span>topicos</span>
-          </div>
-          <div>
-            <strong>3</strong>
-            <span>filtros</span>
-          </div>
-          <div>
-            <strong>2026</strong>
-            <span>foco</span>
-          </div>
         </div>
       </section>
 
@@ -112,6 +98,14 @@ function Login({ onLogin, onNavigate }) {
         </form>
 
         <div className={isSuccess ? 'message success' : 'message'}>{message}</div>
+
+        <button
+          className="link-button"
+          type="button"
+          onClick={() => onNavigate('/cadastro')}
+        >
+          Criar uma conta
+        </button>
       </section>
     </main>
   )

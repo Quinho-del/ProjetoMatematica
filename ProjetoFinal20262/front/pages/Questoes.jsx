@@ -1,26 +1,68 @@
 import { useEffect, useMemo, useState } from 'react'
 
-function getId(questao) {
+export function getId(questao) {
   return questao?.id_q || questao?.id_questao || questao?.id
 }
 
-function getTitulo(questao) {
+export function getTitulo(questao) {
   return questao?.nome_q || questao?.titulo || questao?.nome || ''
 }
 
-function getEnunciado(questao) {
+export function getEnunciado(questao) {
   return questao?.enunciado_q || questao?.enunciado || ''
 }
 
-function getDificuldade(questao) {
+export function getDificuldade(questao) {
   return questao?.dificuldade || questao?.nome_d || ''
 }
 
-function getTopico(questao) {
+export function getDificuldadeLabel(questao) {
+  const dificuldade = String(getDificuldade(questao) || '').trim()
+  const labels = {
+    1: '1 (facil)',
+    2: '2 (medio)',
+    3: '3 (dificil)',
+  }
+
+  return labels[dificuldade] || dificuldade
+}
+
+export function getTopico(questao) {
   return questao?.topico || questao?.palavra_chave || questao?.nome_t || ''
 }
 
-function normalizeTopico(text) {
+export function getVestibular(questao) {
+  const nome = questao?.vestibular || questao?.nome_v || ''
+  const ano = questao?.ano ? ` ${questao.ano}` : ''
+  return `${nome}${ano}`.trim()
+}
+
+export function getImagem(questao) {
+  const imagem = String(questao?.imagem || questao?.caminho || questao?.img || '')
+    .replace(/\s+/g, '')
+    .trim()
+
+  if (!imagem) return ''
+  if (/^(https?:|data:image\/|\/)/i.test(imagem)) return imagem
+  return `/${imagem.replace(/^\.?\//, '')}`
+}
+
+export function getComentario(questao) {
+  return questao?.comentario_prof_r || questao?.explicacao || questao?.comentario || ''
+}
+
+export function getResposta(questao) {
+  return questao?.resp_texto_r || questao?.resposta_correta || questao?.resposta || ''
+}
+
+export function getLetraRespostaCorreta(resposta) {
+  const texto = String(resposta || '').trim()
+  const match = texto.match(/(?:^|[^A-Za-zÀ-ÿ])\(?([A-E])\)?(?:$|[^A-Za-zÀ-ÿ])/i)
+
+  return match ? match[1].toUpperCase() : texto[0]?.toUpperCase()
+}
+
+export function normalizeText(text) {
   return String(text || '')
     .trim()
     .normalize('NFD')
@@ -28,27 +70,11 @@ function normalizeTopico(text) {
     .toLowerCase()
 }
 
-function ordenarQuestoes(lista) {
+export function ordenarQuestoes(lista) {
   return [...lista].sort((a, b) => Number(getId(a)) - Number(getId(b)))
 }
 
-const TOPICOS_FIXOS = [
-    'Algebra',
-    'Funcoes',
-    'Geometria plana',
-    'Geometria espacial',
-    'Trigonometria',
-    'Estatistica',
-    'Probabilidade',
-    'Analise combinatoria',
-    'Matematica financeira',
-    'Porcentagem',
-    'Razao e proporcao',
-    'Sequencias',
-    'Logaritmos',
-]
-
-function montarOpcoes(lista, campo) {
+export function montarOpcoes(lista, campo) {
   const nomes = lista
     .map(campo)
     .filter(Boolean)
@@ -57,13 +83,87 @@ function montarOpcoes(lista, campo) {
   return [...new Set(nomes)].sort()
 }
 
-function extrairAlternativas(enunciado) {
-  const texto = String(enunciado || '')
+export function montarOpcoesUnicas(lista, campo) {
+  const opcoesPorNome = new Map()
+
+  lista
+    .map(campo)
+    .filter(Boolean)
+    .map((valor) => String(valor).trim())
+    .forEach((valor) => {
+      opcoesPorNome.set(normalizeText(valor), valor)
+    })
+
+  return [...opcoesPorNome.values()].sort()
+}
+
+export function normalizarMarcadoresAlternativas(enunciado) {
+  return String(enunciado || '')
+    .replace(
+      /(^|[\s;])\(?([A-E])\)?\s*[).:-]\s*/gi,
+      (_, prefixo, letra) => `${prefixo.trim() ? prefixo : ''}\n${letra.toUpperCase()}) `,
+    )
+    .replace(
+      /(^|[\n;])\s*\(?([A-E])\)?\s+/gi,
+      (_, prefixo, letra) => `${prefixo.trim() ? prefixo : ''}\n${letra.toUpperCase()}) `,
+    )
+}
+
+function encontrarInicioAlternativas(texto) {
+  const marcadores = [...texto.matchAll(/(?:^|\n)\s*([A-E])\)\s*/g)].map((match) => ({
+    letra: match[1],
+    index: match.index,
+  }))
+
+  for (let index = marcadores.length - 5; index >= 0; index -= 1) {
+    const sequencia = marcadores.slice(index, index + 5).map((marcador) => marcador.letra).join('')
+
+    if (sequencia === 'ABCDE') {
+      return marcadores[index].index
+    }
+  }
+
+  for (let index = marcadores.length - 4; index >= 0; index -= 1) {
+    const sequencia = marcadores.slice(index, index + 4).map((marcador) => marcador.letra).join('')
+
+    if (sequencia === 'ABCD') {
+      return marcadores[index].index
+    }
+  }
+
+  return marcadores[0]?.index ?? -1
+}
+
+function extrairAlternativasSemLetras(texto) {
+  const linhas = texto
+    .split('\n')
+    .map((linha) => linha.trim())
+    .filter(Boolean)
+  const ultimasLinhas = linhas.slice(-5)
+  const parecemAlternativas = ultimasLinhas.length >= 4 && ultimasLinhas.every((linha) => {
+    if (linha.length > 80) return false
+    return /^[\dIVX]+(?:[,.\/]\d+)?%?\.?$/i.test(linha) || /^[\dIVX]+\/[\dIVX]+\.?$/i.test(linha)
+  })
+
+  if (!parecemAlternativas) return []
+
+  return ultimasLinhas.map((linha, index) => ({
+    letra: String.fromCharCode(65 + index),
+    texto: linha.replace(/\.$/, ''),
+  }))
+}
+
+export function extrairAlternativas(enunciado) {
+  const texto = normalizarMarcadoresAlternativas(enunciado)
+  const inicioAlternativas = encontrarInicioAlternativas(texto)
+  if (inicioAlternativas < 0) return extrairAlternativasSemLetras(texto)
+
+  const blocoAlternativas = texto.slice(inicioAlternativas)
   const alternativas = []
-  const regex = /(?:^|\n)\s*\(?([A-E])\)?[).]\s*([\s\S]*?)(?=(?:\n\s*\(?[A-E]\)?[).]\s*)|$)/gi
+  const regex = /(?:^|\n)\s*([A-E])\)\s*([\s\S]*?)(?=(?:\n\s*[A-E]\)\s*)|$)/gi
   let match
 
-  while ((match = regex.exec(texto)) !== null) {
+  while ((match = regex.exec(blocoAlternativas)) !== null) {
     alternativas.push({
       letra: match[1].toUpperCase(),
       texto: match[2].trim(),
@@ -73,50 +173,116 @@ function extrairAlternativas(enunciado) {
   return alternativas
 }
 
-function limparEnunciado(enunciado) {
-  return String(enunciado || '').split(/(?:^|\n)\s*\(?A\)?[).]\s*/i)[0]
+export function limparEnunciado(enunciado) {
+  const texto = normalizarMarcadoresAlternativas(enunciado)
+  const inicioAlternativas = encontrarInicioAlternativas(texto)
+  const alternativasSemLetras = inicioAlternativas < 0 ? extrairAlternativasSemLetras(texto) : []
+
+  if (alternativasSemLetras.length > 0) {
+    const linhas = texto.split('\n')
+    return linhas.slice(0, -alternativasSemLetras.length).join('\n').trim()
+  }
+
+  return (inicioAlternativas >= 0 ? texto.slice(0, inicioAlternativas) : texto).trim()
+}
+
+const TOPICOS_FIXOS = ['Media, Moda e Mediana', 'Desvio Padrao', 'Análise de Gráfico']
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('jwtToken')
+
+  return token
+    ? {
+        Authorization: `Bearer ${token}`,
+      }
+    : {}
+}
+
+function renderQuestionImage(questao) {
+  const imagem = getImagem(questao)
+  if (!imagem) return null
+
+  return (
+    <figure className="question-image">
+      <img src={imagem} alt={`Imagem da questao ${getId(questao)}`} />
+    </figure>
+  )
 }
 
 function Questoes({ onNavigate }) {
+  const [todasQuestoes, setTodasQuestoes] = useState([])
   const [questoes, setQuestoes] = useState([])
   const [questaoAtual, setQuestaoAtual] = useState(null)
   const [indiceAtual, setIndiceAtual] = useState(0)
   const [topicos, setTopicos] = useState([])
   const [dificuldades, setDificuldades] = useState([])
+  const [vestibulares, setVestibulares] = useState([])
   const [selectedTopico, setSelectedTopico] = useState('')
   const [selectedDificuldade, setSelectedDificuldade] = useState('')
-  const [searchType, setSearchType] = useState('id')
+  const [selectedVestibular, setSelectedVestibular] = useState('')
   const [termoBusca, setTermoBusca] = useState('')
   const [alternativaSelecionada, setAlternativaSelecionada] = useState('')
-  const [textoResposta, setTextoResposta] = useState('')
   const [resultado, setResultado] = useState(null)
-  const [modalMessage, setModalMessage] = useState('')
 
   const alternativas = useMemo(
     () => extrairAlternativas(getEnunciado(questaoAtual)),
     [questaoAtual],
   )
 
-  function getAuthHeaders() {
-    const token = localStorage.getItem('jwtToken')
-
-    return token
-      ? {
-          Authorization: `Bearer ${token}`,
-        }
-      : {}
-  }
-
   function limparResposta() {
     setAlternativaSelecionada('')
-    setTextoResposta('')
     setResultado(null)
   }
 
   function atualizarFiltros(lista) {
     const topicosBanco = montarOpcoes(lista, getTopico)
-    setTopicos(topicosBanco.length > 0 ? topicosBanco : TOPICOS_FIXOS)
+    setTopicos(montarOpcoesUnicas([...topicosBanco, ...TOPICOS_FIXOS], (topico) => topico))
     setDificuldades(montarOpcoes(lista, getDificuldade))
+    setVestibulares(montarOpcoes(lista, (questao) => questao?.vestibular || ''))
+  }
+
+  function selecionarPrimeira(lista) {
+    setQuestoes(lista)
+    setQuestaoAtual(lista[0] || null)
+    setIndiceAtual(0)
+    limparResposta()
+  }
+
+  function aplicarFiltros({
+    listaBase = todasQuestoes,
+    topico = selectedTopico,
+    dificuldade = selectedDificuldade,
+    vestibular = selectedVestibular,
+    termo = termoBusca,
+    mostrarAlerta = true,
+  } = {}) {
+    const termoNormalizado = normalizeText(termo)
+    const filtradas = listaBase.filter((questao) => {
+      const combinaTopico = !topico || normalizeText(getTopico(questao)) === normalizeText(topico)
+      const combinaDificuldade =
+        !dificuldade || normalizeText(getDificuldade(questao)) === normalizeText(dificuldade)
+      const combinaVestibular =
+        !vestibular ||
+        normalizeText(questao?.vestibular || '') === normalizeText(vestibular)
+      const combinaTermo =
+        !termoNormalizado ||
+        String(getId(questao)) === termoNormalizado ||
+        normalizeText(getEnunciado(questao)).includes(termoNormalizado) ||
+        normalizeText(getTitulo(questao)).includes(termoNormalizado) ||
+        normalizeText(getTopico(questao)).includes(termoNormalizado) ||
+        normalizeText(getVestibular(questao)).includes(termoNormalizado) ||
+        normalizeText(getDificuldade(questao)).includes(termoNormalizado) ||
+        normalizeText(getDificuldadeLabel(questao)).includes(termoNormalizado)
+
+      return combinaTopico && combinaDificuldade && combinaVestibular && combinaTermo
+    })
+
+    const sorted = ordenarQuestoes(filtradas)
+    selecionarPrimeira(sorted)
+
+    if (mostrarAlerta && sorted.length === 0) {
+      alert('Nenhuma questao encontrada com estes filtros.')
+    }
   }
 
   async function carregarQuestoes() {
@@ -133,17 +299,15 @@ function Questoes({ onNavigate }) {
       const data = await response.json()
       const sorted = Array.isArray(data) ? ordenarQuestoes(data) : []
 
-      setQuestoes(sorted)
+      setTodasQuestoes(sorted)
       atualizarFiltros(sorted)
-      setIndiceAtual(0)
-      setQuestaoAtual(sorted[0] || null)
       setSelectedTopico('')
       setSelectedDificuldade('')
-      setSearchType('id')
+      setSelectedVestibular('')
       setTermoBusca('')
-      limparResposta()
+      selecionarPrimeira(sorted)
     } catch (error) {
-      alert('Erro ao carregar as questões.')
+      alert('Erro ao carregar as questoes.')
     }
   }
 
@@ -153,150 +317,26 @@ function Questoes({ onNavigate }) {
     limparResposta()
   }
 
-  function buscarPorTopico(topico) {
-    const normalizedTopico = normalizeTopico(topico)
-    const filtradas = questoes.filter(
-      (questao) => normalizeTopico(getTopico(questao)) === normalizedTopico,
-    )
-
-    if (filtradas.length === 0) {
-      alert('Nenhuma questão encontrada para este tópico.')
-      return
-    }
-
-    const sorted = ordenarQuestoes(filtradas)
-    setQuestoes(sorted)
-    setQuestaoAtual(sorted[0])
-    setIndiceAtual(0)
-    limparResposta()
-  }
-
-  async function buscarPorDificuldade(dificuldade) {
-    try {
-      const response = await fetch(`/busca/dificuldade/${encodeURIComponent(dificuldade)}`, {
-        headers: getAuthHeaders(),
-      })
-
-      if (response.status === 401 || response.status === 403) {
-        window.location.href = '/login'
-        return
-      }
-
-      const data = await response.json()
-      if (!Array.isArray(data) || data.length === 0) {
-        alert('Nenhuma questão encontrada para esta dificuldade.')
-        return
-      }
-
-      const sorted = ordenarQuestoes(data)
-      setQuestoes(sorted)
-      atualizarFiltros(sorted)
-      setQuestaoAtual(sorted[0])
-      setIndiceAtual(0)
-      limparResposta()
-    } catch (error) {
-      alert('Erro ao buscar por dificuldade.')
-    }
-  }
-
   useEffect(() => {
     carregarQuestoes()
   }, [])
 
-  async function buscarQuestao() {
-    const termo = termoBusca.trim()
+  function buscarQuestao() {
+    aplicarFiltros()
+  }
 
-    if (!termo && !selectedTopico && !selectedDificuldade) {
-      alert('Digite o termo de busca ou selecione um filtro.')
-      return
-    }
-
-    if (selectedTopico) {
-      buscarPorTopico(selectedTopico)
-      return
-    }
-
-    if (selectedDificuldade) {
-      await buscarPorDificuldade(selectedDificuldade)
-      return
-    }
-
-    const termoLower = termo.toLowerCase()
-
-    if (searchType === 'id') {
-      const index = questoes.findIndex((questao) => String(getId(questao)) === termo)
-      if (index >= 0) {
-        selecionarQuestao(questoes[index], index)
-        return
-      }
-
-      alert('Nenhuma questão encontrada para este ID.')
-      return
-    }
-
-    if (searchType === 'ano') {
-      const response = await fetch(`/busca/ano/${encodeURIComponent(termo)}`, {
-        headers: getAuthHeaders(),
-      })
-
-      if (!response.ok) {
-        alert('Nenhuma questão encontrada para este ano.')
-        return
-      }
-
-      const data = await response.json()
-      if (!Array.isArray(data) || data.length === 0) {
-        alert('Nenhuma questão encontrada para este ano.')
-        return
-      }
-
-      const sorted = ordenarQuestoes(data)
-      setQuestoes(sorted)
-      atualizarFiltros(sorted)
-      setQuestaoAtual(sorted[0])
-      setIndiceAtual(0)
-      limparResposta()
-      return
-    }
-
-    if (searchType === 'vestibular') {
-      const response = await fetch(`/busca/vestibular/${encodeURIComponent(termo)}`, {
-        headers: getAuthHeaders(),
-      })
-
-      if (!response.ok) {
-        alert('Nenhuma questão encontrada para este vestibular.')
-        return
-      }
-
-      const data = await response.json()
-      if (!Array.isArray(data) || data.length === 0) {
-        alert('Nenhuma questão encontrada para este vestibular.')
-        return
-      }
-
-      const sorted = ordenarQuestoes(data)
-      setQuestoes(sorted)
-      atualizarFiltros(sorted)
-      setQuestaoAtual(sorted[0])
-      setIndiceAtual(0)
-      limparResposta()
-      return
-    }
-
-    const index = questoes.findIndex(
-      (questao) =>
-        String(getId(questao)) === termo ||
-        getEnunciado(questao).toLowerCase().includes(termoLower) ||
-        getTitulo(questao).toLowerCase().includes(termoLower),
-    )
-
-    if (index >= 0) {
-      selecionarQuestao(questoes[index], index)
-      return
-    }
-
-    alert('Nenhuma questão encontrada.')
+  function limparFiltros() {
+    setSelectedTopico('')
+    setSelectedDificuldade('')
+    setSelectedVestibular('')
+    setTermoBusca('')
+    aplicarFiltros({
+      topico: '',
+      dificuldade: '',
+      vestibular: '',
+      termo: '',
+      mostrarAlerta: false,
+    })
   }
 
   function proximaQuestao() {
@@ -311,11 +351,6 @@ function Questoes({ onNavigate }) {
 
     if (alternativas.length > 0 && !alternativaSelecionada) {
       alert('Por favor, selecione uma alternativa.')
-      return
-    }
-
-    if (alternativas.length === 0 && !textoResposta.trim()) {
-      alert('Escreva sua resposta antes de enviar.')
       return
     }
 
@@ -335,33 +370,24 @@ function Questoes({ onNavigate }) {
       }
 
       const data = await response.json()
-      if (!data) {
-        alert('Resposta não encontrada para esta questão.')
-        return
-      }
-
-      const respostaCorreta = String(data.resp_texto_r || '').trim()
+      const respostaCorreta = String(getResposta(data) || '').trim()
       let correta = null
       let usuario = ''
       let resultadoTipo = 'unknown'
 
       if (alternativas.length > 0) {
-        const match = respostaCorreta.match(/^\(?([A-E])\)?/i)
-        correta = match ? match[1].toUpperCase() : respostaCorreta[0]?.toUpperCase()
+        correta = getLetraRespostaCorreta(respostaCorreta)
         usuario = alternativaSelecionada
         resultadoTipo = correta === alternativaSelecionada ? 'correct' : 'incorrect'
       } else {
-        usuario = textoResposta.trim()
         correta = respostaCorreta
-        resultadoTipo =
-          usuario.toLowerCase() === correta.toLowerCase() ? 'correct' : 'incorrect'
       }
 
       setResultado({
         correta,
         enviado: usuario,
         tipo: resultadoTipo,
-        comentario: data.comentario_prof_r || 'Sem comentario disponivel.',
+        comentario: getComentario(data) || 'Sem comentario disponivel.',
       })
     } catch (error) {
       alert('Erro ao buscar a resposta correta.')
@@ -381,23 +407,23 @@ function Questoes({ onNavigate }) {
               <span className="section-label">Banco de questoes</span>
               <h1>Escolha, responda, corrija.</h1>
               <p>
-                Use os filtros para encontrar a questao certa e acompanhe o
-                retorno do professor logo abaixo da resposta.
+                Use os filtros por topico, vestibular e dificuldade para encontrar a questao
+                certa. Depois confira o comentario do especialista.
               </p>
             </div>
 
             <div className="study-stats" aria-label="Resumo das questoes">
               <div>
-                <span>Lista</span>
+                <span>Filtradas</span>
                 <strong>{questoes.length || '--'}</strong>
+              </div>
+              <div>
+                <span>Total</span>
+                <strong>{todasQuestoes.length || '--'}</strong>
               </div>
               <div>
                 <span>Atual</span>
                 <strong>{questaoAtual ? getId(questaoAtual) : '--'}</strong>
-              </div>
-              <div>
-                <span>Modo</span>
-                <strong>{alternativas.length > 0 ? 'ABC' : 'Texto'}</strong>
               </div>
             </div>
           </section>
@@ -406,25 +432,15 @@ function Questoes({ onNavigate }) {
             <button className="btn btn-success" type="button" onClick={carregarQuestoes}>
               Recarregar lista
             </button>
+            <button className="btn btn-secondary" type="button" onClick={limparFiltros}>
+              Limpar filtros
+            </button>
 
             <div className="search-box">
               <select
-                aria-label="Buscar por"
-                value={searchType}
-                onChange={(event) => setSearchType(event.target.value)}
-              >
-                <option value="id">Buscar por ID</option>
-                <option value="ano">Buscar por ano</option>
-                <option value="vestibular">Buscar por vestibular</option>
-              </select>
-
-              <select
                 aria-label="Topicos"
                 value={selectedTopico}
-                onChange={(event) => {
-                  setSelectedTopico(event.target.value)
-                  if (event.target.value) setSelectedDificuldade('')
-                }}
+                onChange={(event) => setSelectedTopico(event.target.value)}
               >
                 <option value="">Todos os topicos</option>
                 {topicos.map((topico) => (
@@ -435,32 +451,34 @@ function Questoes({ onNavigate }) {
               </select>
 
               <select
+                aria-label="Vestibular"
+                value={selectedVestibular}
+                onChange={(event) => setSelectedVestibular(event.target.value)}
+              >
+                <option value="">Todos os vestibulares</option>
+                {vestibulares.map((vestibular) => (
+                  <option key={vestibular} value={vestibular}>
+                    {vestibular}
+                  </option>
+                ))}
+              </select>
+
+              <select
                 aria-label="Dificuldade"
                 value={selectedDificuldade}
-                onChange={(event) => {
-                  setSelectedDificuldade(event.target.value)
-                  if (event.target.value) setSelectedTopico('')
-                }}
+                onChange={(event) => setSelectedDificuldade(event.target.value)}
               >
                 <option value="">Todas as dificuldades</option>
                 {dificuldades.map((dificuldade) => (
                   <option key={dificuldade} value={dificuldade}>
-                    {dificuldade}
+                    {getDificuldadeLabel({ dificuldade })}
                   </option>
                 ))}
               </select>
 
               <input
                 type="text"
-                placeholder={
-                  selectedTopico || selectedDificuldade
-                    ? 'Buscar dentro do filtro selecionado'
-                    : searchType === 'ano'
-                      ? 'Digite o ano (ex: 2021)'
-                      : searchType === 'vestibular'
-                        ? 'Digite o nome do vestibular (ex: ENEM)'
-                        : 'Digite o ID da questao'
-                }
+                placeholder="Buscar por tópico, vestibular e por nível de dificuldade..."
                 value={termoBusca}
                 onChange={(event) => setTermoBusca(event.target.value)}
                 onKeyDown={(event) => {
@@ -481,12 +499,14 @@ function Questoes({ onNavigate }) {
             </h2>
 
             <div className="question-meta">
+              {getVestibular(questaoAtual) && <span>Vestibular: {getVestibular(questaoAtual)}</span>}
               {getDificuldade(questaoAtual) && (
-                <span className="difficulty-label">
-                  Dificuldade: {getDificuldade(questaoAtual)}
-                </span>
+                <span>Dificuldade: {getDificuldadeLabel(questaoAtual)}</span>
               )}
+              {getTopico(questaoAtual) && <span>Topico: {getTopico(questaoAtual)}</span>}
             </div>
+
+            {renderQuestionImage(questaoAtual)}
 
             <div className="question-text">
               {questaoAtual ? (
@@ -527,20 +547,7 @@ function Questoes({ onNavigate }) {
                   )
                 })}
               </div>
-            ) : (
-              <div className="text-answer-box">
-                <label htmlFor="resposta-escrita" className="text-answer-label">
-                  Resposta escrita
-                </label>
-                <textarea
-                  id="resposta-escrita"
-                  value={textoResposta}
-                  onChange={(event) => setTextoResposta(event.target.value)}
-                  placeholder="Escreva sua resposta aqui"
-                  rows={6}
-                />
-              </div>
-            )}
+            ) : null}
 
             <div className="form-buttons">
               <button className="btn btn-primary" type="button" onClick={confirmarResposta}>
@@ -553,20 +560,20 @@ function Questoes({ onNavigate }) {
           </section>
 
           <section className="list-section">
-            <h2>Comentario do professor</h2>
+            <h2>Comentario do especialista</h2>
             <div className="comment-box">
               {resultado ? (
                 <>
-                  <p>
-                    <strong>Sua resposta:</strong> {resultado.enviado}
-                  </p>
-                  {getId(questaoAtual) !== 2 && (
+                  {resultado.enviado && (
                     <p>
-                      <strong>Resposta correta:</strong> {resultado.correta}
+                      <strong>Sua resposta:</strong> {resultado.enviado}
                     </p>
                   )}
                   <p>
-                    <strong>Comentario do professor:</strong>
+                    <strong>Resposta correta:</strong> {resultado.correta}
+                  </p>
+                  <p>
+                    <strong>Comentario do especialista:</strong>
                     <br />
                     {resultado.comentario}
                   </p>
@@ -582,19 +589,8 @@ function Questoes({ onNavigate }) {
       </main>
 
       <footer>
-        <p>Copyright 2026 - Suricateam | Vestibular+</p>
+        <p>Copyright 2026 \ Vestibular +</p>
       </footer>
-
-      {modalMessage && (
-        <div className="modal-message">
-          <div className="modal-content">
-            <p>{modalMessage}</p>
-            <button className="btn btn-primary" type="button" onClick={() => setModalMessage('')}>
-              Fechar
-            </button>
-          </div>
-        </div>
-      )}
     </>
   )
 }

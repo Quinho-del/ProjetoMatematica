@@ -1,10 +1,12 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const { logMiddleware, errorMiddleware } = require('./src/Middleware/Middleware');
 const authRoutes = require('./src/Routes/authRoutes');
+const authMiddleware = require('./src/Middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +15,7 @@ const PORT = process.env.PORT || 3000;
 // MIDDLEWARES
 // ======================================================
 
+app.use(cors());
 app.use(express.json());
 app.use(logMiddleware);
 
@@ -23,7 +26,7 @@ app.use(logMiddleware);
 const routes = require('./src/Routes/buscaRoutes');
 
 app.use('/auth', authRoutes);
-app.use('/busca', routes);
+app.use('/busca', authMiddleware, routes);
 
 // ======================================================
 // PÁGINAS
@@ -59,9 +62,7 @@ const serveFrontend = (req, res) => {
 
 app.get('/', serveFrontend);
 app.get('/Home', serveFrontend);
-app.get('/cadastro', (req, res) => {
-    res.redirect('/login');
-});
+app.get('/cadastro', serveFrontend);
 app.get('/login', serveFrontend);
 app.get('/api', (req, res) => {
     res.json({

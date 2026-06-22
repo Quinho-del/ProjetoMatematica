@@ -55,7 +55,7 @@ function Sobre({ onNavigate }) {
       </main>
 
       <footer>
-        <p>Copyright 2026 Suricateam | Vestibular+</p>
+        <p>Copyright 2026 \ Vestibular +</p>
       </footer>
     </>
   )

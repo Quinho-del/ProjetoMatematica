@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import './App.css'
 import Navbar from './components/Navbar.jsx'
+import Cadastro from './pages/Cadastro.jsx'
 import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
 import Questoes from './pages/Questoes.jsx'
+import Simulado from './pages/Simulado.jsx'
 import Sobre from './pages/Sobre.jsx'
 
 
@@ -11,8 +13,10 @@ const routes = {
   '/': Login,
   '/home': Home,
   '/Home': Home,
+  '/cadastro': Cadastro,
   '/login': Login,
   '/questoes': Questoes,
+  '/simulado': Simulado,
   '/sobre': Sobre,
 }
 
@@ -25,7 +29,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() =>
     Boolean(localStorage.getItem('jwtToken')),
   )
-  const protectedPaths = ['/questoes']
+  const protectedPaths = ['/questoes', '/simulado']
 
   useEffect(() => {
     const handlePopState = () => setPath(getCurrentPath())
@@ -95,7 +99,7 @@ function App() {
       ? '/login'
       : path
   const Page = routes[effectivePath] || Login
-  const isLoginPage = ['/', '/login'].includes(effectivePath.toLowerCase())
+  const isLoginPage = ['/', '/login', '/cadastro'].includes(effectivePath.toLowerCase())
 
   return (
     <div className="app-shell">

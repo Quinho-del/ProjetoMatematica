@@ -214,6 +214,30 @@
   z-index: 2;
 }
 
+.home-main-single {
+  grid-template-columns: 1fr;
+}
+
+.home-main-single .informacoes {
+  width: 100%;
+}
+
+.home-main-single .info-topicos {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.home-main-single .info-topicos li {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 1rem 1rem 1rem 2.2rem;
+}
+
+.home-main-single .info-topicos li::before {
+  left: 1rem;
+}
+
 .titulo-destaque,
 .informacoes,
 .form-section,
@@ -567,6 +591,25 @@ p {
   opacity: 0.7;
 }
 
+.login-container .link-button {
+  background: transparent;
+  box-shadow: none;
+  color: var(--blue-700);
+  margin-top: 0.9rem;
+}
+
+.login-container .link-button:hover {
+  background: #e8f2ff;
+  filter: none;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+  opacity: 0.7;
+  transform: none;
+}
+
 .message {
   color: #b42318;
   font-weight: 900;
@@ -743,8 +786,38 @@ p {
 }
 
 .question-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.9rem 0 1rem;
+}
+
+.question-meta span {
+  background: #e8f2ff;
+  border: 1px solid var(--line);
+  border-radius: 999px;
   color: var(--blue-700);
+  font-size: 0.9rem;
   font-weight: 900;
+  padding: 0.45rem 0.75rem;
+}
+
+.question-image {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 1rem 0 1.3rem;
+  overflow: hidden;
+  padding: 0.7rem;
+}
+
+.question-image img {
+  display: block;
+  height: auto;
+  margin: 0 auto;
+  max-height: 520px;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .question-text {
@@ -859,6 +932,38 @@ p {
 
 .modal-content .btn {
   margin-top: 1rem;
+}
+
+.simulado-page .study-header {
+  margin-bottom: 1rem;
+}
+
+.simulado-actions {
+  justify-content: space-between;
+}
+
+.simulado-list {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.simulado-question {
+  scroll-margin-top: 90px;
+}
+
+.simulado-question-heading {
+  align-items: start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.simulado-question-heading h2 {
+  margin-bottom: 0;
+}
+
+.simulado-comment {
+  margin-top: 1.2rem;
 }
 
 .about-page {
@@ -1008,6 +1113,10 @@ p {
 
   .main {
     margin-top: -2rem;
+  }
+
+  .home-main-single .info-topicos {
+    grid-template-columns: 1fr;
   }
 
   .login-showcase {

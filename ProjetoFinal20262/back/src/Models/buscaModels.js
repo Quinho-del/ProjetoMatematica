@@ -9,10 +9,14 @@ const selectQuestoes = `
     t.nome AS topico,
     t.descricao AS descricao_topico,
     v.nome AS vestibular,
-    v.ano
+    v.ano,
+    q.imagem,
+    r.resposta_correta,
+    r.explicacao
   FROM questao q
   LEFT JOIN topico t ON t.idt = q.idtopico
   LEFT JOIN vestibular v ON v.idv = q.vestibular
+  LEFT JOIN resposta r ON r.idr = q.idresposta
 `;
 
 async function listarTodos() {

@@ -23,6 +23,11 @@ function Navbar({ isAuthenticated, onLogout, onNavigate }) {
             </a>
           </li>
           <li>
+            <a href="/simulado" onClick={(event) => handleNavigate(event, '/simulado')}>
+              Simulado
+            </a>
+          </li>
+          <li>
             <a href="/sobre" onClick={(event) => handleNavigate(event, '/sobre')}>
               Sobre
             </a>
