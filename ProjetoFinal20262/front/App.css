@@ -448,8 +448,7 @@ p {
 }
 
 .login-wordmark,
-.login-showcase-copy,
-.login-metrics {
+.login-showcase-copy {
   position: relative;
   z-index: 1;
 }
@@ -473,33 +472,6 @@ p {
   color: #dbeafe;
   font-size: 1.15rem;
   line-height: 1.7;
-}
-
-.login-metrics {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.login-metrics div {
-  background: rgb(255 255 255 / 12%);
-  border: 1px solid rgb(255 255 255 / 16%);
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.login-metrics strong,
-.login-metrics span {
-  display: block;
-}
-
-.login-metrics strong {
-  font-size: 1.8rem;
-}
-
-.login-metrics span {
-  color: #bfdbfe;
-  font-weight: 800;
 }
 
 .login-container {
@@ -1135,7 +1107,6 @@ p {
   }
 
   .hero-panel,
-  .login-metrics,
   .contatos-info,
   .study-stats {
     grid-template-columns: 1fr;

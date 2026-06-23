@@ -122,10 +122,10 @@ function Simulado({ onNavigate }) {
           <section className="study-header simulado-header">
             <div>
               <span className="section-label">Simulado</span>
-              <h1>30 questoes em uma unica rodada.</h1>
+              <h1>30 questões em uma única rodada.</h1>
               <p>
-                O cronometro fica ativo apenas para voce acompanhar seu tempo. As respostas e os
-                comentarios aparecem quando o simulado for finalizado.
+                O cronômetro fica ativo apenas para você acompanhar seu tempo. As respostas e os
+                comentários aparecem quando o simulado for finalizado.
               </p>
             </div>
 
@@ -177,13 +177,13 @@ function Simulado({ onNavigate }) {
                 return (
                   <article className="form-section simulado-question" key={id}>
                     <div className="simulado-question-heading">
-                      <h2>Questao {index + 1}</h2>
+                      <h2>Questão {index + 1}</h2>
                       <div className="question-meta">
                         {getVestibular(questao) && <span>Vestibular: {getVestibular(questao)}</span>}
                         {getDificuldade(questao) && (
                           <span>Dificuldade: {getDificuldadeLabel(questao)}</span>
                         )}
-                        {getTopico(questao) && <span>Topico: {getTopico(questao)}</span>}
+                        {getTopico(questao) && <span>Tópico: {getTopico(questao)}</span>}
                       </div>
                     </div>
 
@@ -231,22 +231,22 @@ function Simulado({ onNavigate }) {
                       </div>
                     ) : (
                       <div className="comment-box simulado-comment">
-                        <p>Alternativas nao cadastradas para esta questao.</p>
+                        <p>Alternativas não cadastradas para esta questão.</p>
                       </div>
                     )}
 
                     {finalizado && (
                       <div className="comment-box simulado-comment">
                         <p>
-                          <strong>Sua resposta:</strong> {respostaUsuario || 'Nao respondida'}
+                          <strong>Sua resposta:</strong> {respostaUsuario || 'Não respondida'}
                         </p>
                         <p>
-                          <strong>Resposta correta:</strong> {correta || 'Nao cadastrada'}
+                          <strong>Resposta correta:</strong> {correta || 'Não cadastrada'}
                         </p>
                         <p>
-                          <strong>Comentario do especialista:</strong>
+                          <strong>Comentário do especialista:</strong>
                           <br />
-                          {getComentario(questao) || 'Sem comentario disponivel.'}
+                          {getComentario(questao) || 'Sem comentário disponível.'}
                         </p>
                       </div>
                     )}

@@ -55,16 +55,16 @@ function Login({ onLogin, onNavigate }) {
         <div className="login-wordmark">Vestibular+</div>
         <div className="login-showcase-copy">
           <span>Vestibular+</span>
-          <h1>Estatistica com ritmo de prova.</h1>
-          <p>Entre, escolha uma questao e avance sem perder tempo.</p>
+          <h1>Estatística com ritmo de prova.</h1>
+          <p>Entre, escolha uma questão e avance sem perder tempo.</p>
         </div>
       </section>
 
       <section className="login-container">
         <div className="login-heading">
-          <span>Area do estudante</span>
+          <span>Área do estudante</span>
           <h2>Login</h2>
-          <p className="subtitle">Acesse sua lista de questoes.</p>
+          <p className="subtitle">Acesse sua lista de questões.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">

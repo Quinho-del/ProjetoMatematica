@@ -48,7 +48,7 @@ const serveFrontend = (req, res) => {
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Moleculas em Prova</title>
+                <title>Vestibular+</title>
             </head>
             <body style="font-family: Arial, sans-serif; max-width: 720px; margin: 48px auto; line-height: 1.5;">
                 <h1>Backend rodando</h1>

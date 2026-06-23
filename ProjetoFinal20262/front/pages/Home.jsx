@@ -3,14 +3,14 @@ function Home() {
     <>
       <section className="subtitulo">
         <div className="hero-copy">
-          <span className="hero-kicker">Vestibular+ / Estatistica</span>
+          <span className="hero-kicker">Vestibular+ / Estatística</span>
           <h1>
-            Treine como se a prova ja tivesse comecado.
+            Treine como se a prova já tivesse começado.
           </h1>
           <p>
-            Questoes de Estatistica por tema (Media, Moda e Mediana, Desvio Padrao e
-            Analise de Grafico), dificuldade e vestibular em uma experiencia feita para estudar
-            rapido, revisar melhor e ganhar confianca.
+            Questões por tema (Média, Moda e Mediana, Desvio Padrão e Análise de Gráfico),
+            com busca por vestibular e por nível de dificuldade em uma experiência feita para
+            estudar rápido, revisar melhor e ganhar confiança.
           </p>
         </div>
 
@@ -18,12 +18,12 @@ function Home() {
 
       <main className="main home-main-single">
         <aside className="informacoes">
-          <span className="section-label">Metodo</span>
-          <h3>Questoes por topico</h3>
+          <span className="section-label">Método</span>
+          <h3>Questões por tópico</h3>
           <ul className="info-topicos">
-            <li>Media, Moda e Mediana</li>
-            <li>Desvio Padrao</li>
-            <li>Analise de Grafico</li>
+            <li>Média, Moda e Mediana</li>
+            <li>Desvio Padrão</li>
+            <li>Análise de Gráfico</li>
           </ul>
         </aside>
       </main>

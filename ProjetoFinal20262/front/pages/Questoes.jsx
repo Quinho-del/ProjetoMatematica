@@ -19,9 +19,9 @@ export function getDificuldade(questao) {
 export function getDificuldadeLabel(questao) {
   const dificuldade = String(getDificuldade(questao) || '').trim()
   const labels = {
-    1: '1 (facil)',
-    2: '2 (medio)',
-    3: '3 (dificil)',
+    1: '1 (fácil)',
+    2: '2 (médio)',
+    3: '3 (difícil)',
   }
 
   return labels[dificuldade] || dificuldade
@@ -186,7 +186,7 @@ export function limparEnunciado(enunciado) {
   return (inicioAlternativas >= 0 ? texto.slice(0, inicioAlternativas) : texto).trim()
 }
 
-const TOPICOS_FIXOS = ['Media, Moda e Mediana', 'Desvio Padrao', 'Análise de Gráfico']
+const TOPICOS_FIXOS = ['Média, Moda e Mediana', 'Desvio Padrão', 'Análise de Gráfico']
 
 function getAuthHeaders() {
   const token = localStorage.getItem('jwtToken')
@@ -387,7 +387,7 @@ function Questoes({ onNavigate }) {
         correta,
         enviado: usuario,
         tipo: resultadoTipo,
-        comentario: getComentario(data) || 'Sem comentario disponivel.',
+        comentario: getComentario(data) || 'Sem comentário disponível.',
       })
     } catch (error) {
       alert('Erro ao buscar a resposta correta.')
@@ -404,11 +404,11 @@ function Questoes({ onNavigate }) {
 
           <section className="study-header">
             <div>
-              <span className="section-label">Banco de questoes</span>
+              <span className="section-label">Banco de questões</span>
               <h1>Escolha, responda, corrija.</h1>
               <p>
-                Use os filtros por topico, vestibular e dificuldade para encontrar a questao
-                certa. Depois confira o comentario do especialista.
+                Use os filtros por tópico, vestibular e dificuldade para encontrar a questão
+                certa. Depois confira o comentário do especialista.
               </p>
             </div>
 
@@ -494,7 +494,7 @@ function Questoes({ onNavigate }) {
 
           <section className="form-section">
             <h2>
-              {questaoAtual ? `Questao ${getId(questaoAtual)}` : 'Carregando questao...'}
+              {questaoAtual ? `Questão ${getId(questaoAtual)}` : 'Carregando questão...'}
               {getTitulo(questaoAtual) && <span> ({getTitulo(questaoAtual)})</span>}
             </h2>
 
@@ -503,7 +503,7 @@ function Questoes({ onNavigate }) {
               {getDificuldade(questaoAtual) && (
                 <span>Dificuldade: {getDificuldadeLabel(questaoAtual)}</span>
               )}
-              {getTopico(questaoAtual) && <span>Topico: {getTopico(questaoAtual)}</span>}
+              {getTopico(questaoAtual) && <span>Tópico: {getTopico(questaoAtual)}</span>}
             </div>
 
             {renderQuestionImage(questaoAtual)}
@@ -554,13 +554,13 @@ function Questoes({ onNavigate }) {
                 Confirmar resposta
               </button>
               <button className="btn btn-secondary" type="button" onClick={proximaQuestao}>
-                Proxima questao
+                Próxima questão
               </button>
             </div>
           </section>
 
           <section className="list-section">
-            <h2>Comentario do especialista</h2>
+            <h2>Comentário do especialista</h2>
             <div className="comment-box">
               {resultado ? (
                 <>
@@ -573,7 +573,7 @@ function Questoes({ onNavigate }) {
                     <strong>Resposta correta:</strong> {resultado.correta}
                   </p>
                   <p>
-                    <strong>Comentario do especialista:</strong>
+                    <strong>Comentário do especialista:</strong>
                     <br />
                     {resultado.comentario}
                   </p>
